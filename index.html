@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Dukaan Khata</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<style>
+:root{--bg:#f6f5f1;--card:#fff;--tx:#1d1d1b;--mut:#6b6b66;--cash:#1d9a5b;--upi:#5b3fd1;--bd:#e3e1da}
+@media (prefers-color-scheme:dark){:root{--bg:#141413;--card:#201f1d;--tx:#f3f2ee;--mut:#9c9a92;--bd:#34332f}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0}
+body{background:var(--bg);color:var(--tx);font-family:system-ui,-apple-system,"Segoe UI",sans-serif;max-width:480px;margin:auto;padding:calc(10px + env(safe-area-inset-top,0px)) 12px calc(12px + env(safe-area-inset-bottom,0px));touch-action:manipulation}
+.screen{display:none}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:16px;padding:14px;margin-bottom:12px}
+h1{font-size:15px;margin:0 0 6px;color:var(--mut);font-weight:600}
+.big{font-size:40px;font-weight:700}.row{display:flex;gap:8px}.row>div{flex:1}
+.lbl{font-size:12px;color:var(--mut)}.v{font-size:20px;font-weight:600}
+/* entry screen */
+#entry{user-select:none;-webkit-user-select:none}
+.top{display:flex;align-items:center;justify-content:space-between;height:48px;margin-bottom:6px}
+.ico{width:44px;height:44px;border-radius:12px;border:1px solid var(--bd);background:var(--card);color:var(--tx);display:flex;align-items:center;justify-content:center}
+.hi{font-size:20px;font-weight:700}
+.ban{height:38px;line-height:38px;text-align:center;font-weight:700;border-radius:10px;color:#fff;background:var(--cash);opacity:0;transition:opacity .15s}
+.ban.on{opacity:1}
+.disp{font-size:46px;text-align:right;padding:6px 8px;font-weight:700;margin:6px 0 8px}
+.pad{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.pad button{font-size:30px;font-weight:600;padding:20px 0;border-radius:14px;border:1px solid var(--bd);background:var(--card);color:var(--tx)}
+.pad button:active{background:var(--bd)}
+.go{margin-top:12px}.go button{flex:1;font-size:22px;font-weight:700;padding:22px 0;border:0;border-radius:14px;color:#fff}
+.go .c{background:var(--cash)}.go .u{background:var(--upi)}
+.go button:active{opacity:.7}
+/* home */
+.tabs button{flex:1;padding:8px;border-radius:10px;border:1px solid var(--bd);background:var(--bg);color:var(--tx);font-size:14px}
+.tabs button.on{background:var(--tx);color:var(--bg)}
+.bars{display:flex;align-items:flex-end;gap:6px;height:90px;margin-top:10px}
+.bars div{flex:1;text-align:center;font-size:10px;color:var(--mut)}.bars i{display:block;background:var(--cash);border-radius:4px 4px 0 0;margin-bottom:3px}
+.li{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--bd);font-size:15px}.li:last-child{border:0}
+.sm{background:none;border:1px solid var(--bd);color:var(--tx);border-radius:8px;padding:8px 12px;font-size:14px}
+input{width:100%;font-size:18px;padding:12px;border-radius:10px;border:1px solid var(--bd);background:var(--bg);color:var(--tx);margin:6px 0}
+.btn{width:100%;font-size:18px;font-weight:700;padding:14px;border:0;border-radius:12px;background:var(--tx);color:var(--bg);margin-top:6px}
+.code{font-size:28px;font-weight:700;letter-spacing:4px}
+</style>
+</head>
+<body>
+
+<div id="login" class="screen">
+  <div class="card">
+    <h1>Dukaan Khata</h1>
+    <div id="s1">
+      <div class="lbl" id="clbl"></div>
+      <input id="ct" autocomplete="username">
+      <button class="btn" onclick="sendOtp()">Send login link</button>
+    </div>
+    <div id="s2" style="display:none">
+      <div class="lbl">Enter the OTP you received</div>
+      <input id="otp" inputmode="numeric" autocomplete="one-time-code">
+      <button class="btn" onclick="verify()">Login</button>
+    </div>
+  </div>
+</div>
+
+<div id="nameS" class="screen">
+  <div class="card">
+    <h1>Welcome! What is your name?</h1>
+    <input id="nm" placeholder="Your name" autocomplete="given-name">
+    <button class="btn" onclick="saveName()">Continue</button>
+  </div>
+</div>
+
+<div id="setup" class="screen">
+  <div class="card">
+    <h1>I am the shop owner</h1>
+    <input id="sn" placeholder="Shop name">
+    <button class="btn" onclick="mk()">Create my shop</button>
+  </div>
+  <div class="card">
+    <h1>I am a helper</h1>
+    <input id="jc" placeholder="Shop code from owner" style="text-transform:uppercase">
+    <button class="btn" onclick="jn()">Join shop</button>
+  </div>
+  <button class="sm" onclick="out()">Log out</button>
+</div>
+
+<div id="entry" class="screen">
+  <div class="top">
+    <button class="ico" id="homeBtn" onclick="goHome()" aria-label="Home">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h5v-6h4v6h5V10"/></svg>
+    </button>
+    <div class="hi" id="hi"></div>
+    <div style="width:44px"></div>
+  </div>
+  <div class="ban" id="ban"></div>
+  <div class="disp" id="disp">₹0</div>
+  <div class="pad" id="pad"></div>
+  <div class="row go">
+    <button class="c" onclick="add('cash')">CASH</button>
+    <button class="u" onclick="add('upi')">UPI</button>
+  </div>
+  <button class="sm" id="hout" onclick="out()" style="display:none;margin-top:16px">Log out</button>
+</div>
+
+<div id="home" class="screen">
+  <div class="top">
+    <button class="sm" onclick="goEntry()">← Add sale</button>
+    <div class="hi" id="hi2"></div>
+    <div style="width:44px"></div>
+  </div>
+  <div class="card">
+    <h1 id="oname"></h1>
+    <div class="lbl">Today's sale</div>
+    <div class="big" id="tot">₹0</div>
+    <div class="row" style="margin-top:8px">
+      <div><div class="lbl">Cash</div><div class="v" id="cash" style="color:var(--cash)">₹0</div></div>
+      <div><div class="lbl">UPI</div><div class="v" id="upi" style="color:var(--upi)">₹0</div></div>
+      <div><div class="lbl">Bills</div><div class="v" id="n">0</div></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="row tabs" id="tabs"></div>
+    <div style="margin-top:10px"><span class="lbl" id="plbl"></span><div class="v" id="ptot" style="font-size:16px"></div></div>
+    <div class="bars" id="bars"></div>
+  </div>
+  <div class="card"><h1>Daily history</h1><div id="hist"></div></div>
+  <div class="card">
+    <h1>Closing cash check</h1>
+    <input id="cnt" type="number" inputmode="numeric" placeholder="Cash counted in drawer ₹" oninput="chk()">
+    <div id="chk" class="lbl"></div>
+  </div>
+  <div class="card"><h1>Today's entries</h1><div id="list"></div></div>
+  <div class="card">
+    <h1>Helper code (give this to your helper)</h1>
+    <div class="code" id="scode"></div>
+    <div class="lbl">Helper logs in, taps "I am a helper" and enters this code.</div>
+  </div>
+  <button class="sm" onclick="out()">Log out</button>
+</div>
+
+<script>
+/* ====== SUPABASE DETAILS ====== */
+var SB_URL="https://hlfiaxavpypizdaoegix.supabase.co", SB_KEY="sb_publishable_jTGWC77lGBRRckUesZNB9Q_Ttjbd8uN";
+var AUTH="email"; // change to "phone" once an SMS provider is set up in Supabase
+/* ============================== */
+
+var sb=supabase.createClient(SB_URL,SB_KEY);
+var $=function(i){return document.getElementById(i)};
+var shop=null,role=null,uname="",D=[],T=[],cur="",per="Today",contact="",ft;
+var inr=function(x){return "₹"+Number(x).toLocaleString("en-IN")};
+var ds=function(t){return new Date(t).toLocaleDateString("sv-SE")};
+function show(id){["login","nameS","setup","entry","home"].forEach(function(s){$(s).style.display=s==id?"block":"none"});window.scrollTo(0,0)}
+function fail(r){if(r.error){alert(r.error.message);return true}}
+
+$("clbl").textContent=AUTH=="phone"?"Mobile number":"Email address";
+$("ct").placeholder=AUTH=="phone"?"98765 43210":"you@example.com";
+if(AUTH=="phone")document.querySelector("#s1 .btn").textContent="Send OTP";
+
+$("pad").innerHTML=["1","2","3","4","5","6","7","8","9","C","0","⌫"].map(function(k){return '<button onclick="key(\''+k+'\')">'+k+'</button>'}).join("");
+$("tabs").innerHTML=["Today","Week","Month"].map(function(p){return '<button id="t'+p+'" onclick="per=\''+p+'\';draw()">'+p+'</button>'}).join("");
+
+function key(k){
+  if(k=="C")cur="";else if(k=="⌫")cur=cur.slice(0,-1);else if(cur.length<7)cur+=k;
+  $("disp").textContent=inr(+cur||0);
+}
+function flash(t){var b=$("ban");b.textContent=t;b.className="ban on";clearTimeout(ft);ft=setTimeout(function(){b.className="ban"},1600)}
+
+/* ---- login ---- */
+async function sendOtp(){
+  var v=$("ct").value.trim();
+  if(AUTH=="phone"){v=v.replace(/\D/g,"");v=v.length==10?"+91"+v:"+"+v}
+  contact=v;
+  var r=await sb.auth.signInWithOtp(AUTH=="phone"?{phone:v}:{email:v,options:{emailRedirectTo:location.origin}});
+  if(fail(r))return;
+  $("s1").style.display="none";$("s2").style.display="block";
+  if(AUTH=="email")$("s2").innerHTML='<div class="v" style="font-size:18px">Check your email ✉️</div><div class="lbl" style="margin:6px 0 10px">We sent a login link to '+contact+'. Open that email on this phone and tap "Sign in". You will come straight back here.</div><button class="sm" onclick="location.reload()">Use a different email</button>';
+}
+async function verify(){
+  var t=$("otp").value.trim();
+  var r=await sb.auth.verifyOtp(AUTH=="phone"?{phone:contact,token:t,type:"sms"}:{email:contact,token:t,type:"email"});
+  if(fail(r))return;boot();
+}
+async function out(){await sb.auth.signOut();location.reload()}
+
+/* ---- startup: login -> name -> shop setup -> ENTRY SCREEN ---- */
+async function boot(){
+  var s=(await sb.auth.getSession()).data.session;
+  if(!s)return show("login");
+  var u=(await sb.auth.getUser()).data.user||s.user;
+  uname=(u.user_metadata&&u.user_metadata.name)||"";
+  if(!uname)return show("nameS");
+  var r=await sb.from("members").select("role,shops(id,name,code)").eq("user_id",u.id).limit(1);
+  if(!r.data||!r.data.length)return show("setup");
+  role=r.data[0].role;shop=r.data[0].shops;
+  $("hi").textContent="Hi, "+uname;$("hi2").textContent="Hi, "+uname;
+  $("homeBtn").style.visibility=role=="owner"?"visible":"hidden";
+  $("hout").style.display=role=="owner"?"none":"block";
+  $("oname").textContent=shop.name;$("scode").textContent=shop.code;
+  goEntry();
+}
+async function saveName(){
+  var n=$("nm").value.trim();if(!n)return;
+  var r=await sb.auth.updateUser({data:{name:n}});
+  if(!fail(r))boot();
+}
+async function mk(){var r=await sb.rpc("create_shop",{n:$("sn").value.trim()||"My Shop"});if(!fail(r))boot()}
+async function jn(){var r=await sb.rpc("join_shop",{c:$("jc").value.trim()});if(!fail(r))boot()}
+
+function goEntry(){show("entry")}
+function goHome(){if(role!="owner")return;show("home");load()}
+
+/* ---- adding a sale (fast: keypad clears instantly) ---- */
+async function add(m){
+  var a=+cur;if(!a)return;
+  cur="";key("C");
+  var r=await sb.from("sales").insert({shop_id:shop.id,amount:a,mode:m});
+  if(r.error){alert("NOT SAVED: "+inr(a)+" - "+r.error.message);return}
+  flash("Saved ✓  "+inr(a)+" · "+m.toUpperCase());
+}
+
+/* ---- home / analytics (owner only) ---- */
+async function del(id){if(!confirm("Delete this entry?"))return;var r=await sb.from("sales").delete().eq("id",id);if(!fail(r))load()}
+async function load(){
+  var a=await sb.rpc("daily_summary",{s:shop.id,d:60});
+  var m=new Date();m.setHours(0,0,0,0);
+  var b=await sb.from("sales").select("id,amount,mode,created_at").eq("shop_id",shop.id).gte("created_at",m.toISOString()).order("created_at",{ascending:false}).limit(60);
+  if(fail(a)||fail(b))return;
+  D=a.data.map(function(x){return{day:x.day,cash:+x.cash,upi:+x.upi,bills:+x.bills}});
+  T=b.data;draw();
+}
+function chk(){
+  var c=$("cnt").value,t=D.filter(function(x){return x.day==ds(Date.now())})[0],x=t?t.cash:0;
+  $("chk").textContent=c===""?"":(c-x==0?"All matched ✔":(c-x<0?"Short by ":"Extra ")+inr(Math.abs(c-x))+" (expected "+inr(x)+")");
+}
+function draw(){
+  var now=Date.now(),td=D.filter(function(x){return x.day==ds(now)})[0]||{cash:0,upi:0,bills:0};
+  $("tot").textContent=inr(td.cash+td.upi);$("cash").textContent=inr(td.cash);$("upi").textContent=inr(td.upi);$("n").textContent=td.bills;
+  ["Today","Week","Month"].forEach(function(p){$("t"+p).className=p==per?"on":""});
+  var days=per=="Today"?1:per=="Week"?7:30,from=ds(now-(days-1)*864e5);
+  var R=D.filter(function(x){return x.day>=from});
+  var rc=R.reduce(function(s,x){return s+x.cash},0),ru=R.reduce(function(s,x){return s+x.upi},0);
+  $("plbl").textContent=per=="Today"?"Today":"Last "+days+" days";
+  $("ptot").textContent=inr(rc+ru)+" · Cash "+inr(rc)+" · UPI "+inr(ru);
+  var n=Math.max(7,Math.min(days,14)),vals=[],mx=1;
+  for(var i=n-1;i>=0;i--){var k=ds(now-i*864e5),x=D.filter(function(y){return y.day==k})[0],v=x?x.cash+x.upi:0;vals.push([k,v]);mx=Math.max(mx,v)}
+  $("bars").innerHTML=vals.map(function(p){return '<div><i style="height:'+Math.round(p[1]/mx*65)+'px"></i>'+(+p[0].slice(8))+'</div>'}).join("");
+  $("hist").innerHTML=D.map(function(x){return '<div class="li"><span>'+new Date(x.day+"T00:00").toLocaleDateString("en-IN",{day:"numeric",month:"short",weekday:"short"})+'</span><span style="text-align:right"><b>'+inr(x.cash+x.upi)+'</b><br><span class="lbl">Cash '+inr(x.cash)+' · UPI '+inr(x.upi)+'</span></span></div>'}).join("")||'<div class="lbl">No history yet</div>';
+  $("list").innerHTML=T.map(function(e){return '<div class="li"><span>'+new Date(e.created_at).toLocaleTimeString("en-IN",{hour:"2-digit",minute:"2-digit"})+' · <b style="color:var(--'+e.mode+')">'+e.mode.toUpperCase()+'</b></span><span>'+inr(e.amount)+' <button class="sm" onclick="del('+e.id+')">Delete</button></span></div>'}).join("")||'<div class="lbl">No sales yet today</div>';
+  chk();
+}
+boot();
+</script>
+</body>
+</html>
